@@ -5,15 +5,22 @@ export const POST: RequestHandler = async ({ request }) => {
     try {
         const body = await request.json();
         const msg = body;  // フロントから送られるのは { msg } オブジェクト
-        console.log(msg);
         
         if (!msg || !msg.content) {
             return json({ error: "メッセージが不正です" }, { status: 400 });
         }
         
         console.log("受信メッセージ:", msg);
-
-        const response = { role: "assistant", content: "Hello! How can I help you today?" }
+        const result = await fetch('https://mybackend.www-shoin.workers.dev/api/chat', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(msg.content)
+        });
+        const data = await result.json();
+        console.log(data);
+        const response = { role: "assistant", content: data.content }
         
         // ここでメッセージの処理を行う
         // 例: データベースへの保存やAIへの送信など

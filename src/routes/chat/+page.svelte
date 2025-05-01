@@ -53,7 +53,7 @@
     }
 </script>
 
-<div class="flex h-screen overflow-hidden">
+<div class="flex h-screen overflow-x-hidden overflow-y-scroll">
     {#if displaySidebar}
     <div id="sidebar" class="text-black w-64 bg-gray-50"
         transition:slide={{ duration: 300, axis: 'x' }}>
@@ -109,23 +109,23 @@
             <div class="py-12 px-60">
                 {#each charMessages as charMessage}
                     {#if charMessage.role === "user"}
-                        <div class="flex items-center justify-end">
+                        <div class="flex items-center justify-end p-2">
                             <div class="flex items-center bg-gray-100 rounded-lg p-4">
                                 <p>{charMessage.content}</p>
                             </div>
                         </div>
                     {/if}
                     {#if charMessage.role === "assistant"}
-                        <div class="flex items-center justify-start">
+                        <div class="flex items-center justify-start p-2">
                             <div class="flex items-center bg-green-300 rounded-lg p-4">
-                                <p>{charMessage.content}</p>
+                                <p class="whitespace-pre-wrap">{charMessage.content}</p>
                             </div>
                         </div>
                     {/if}
                 {/each}
             </div>
             <div class="flex flex-col justify-center items-center">
-                <div class="flex items-center absolute bottom-10">
+                <div class="flex items-center absolute bottom-10 bg-white w-full">
                     <textarea
                         bind:value={message}
                         rows="1"placeholder="Type your message here..."
