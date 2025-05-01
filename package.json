@@ -25,5 +25,12 @@
 		"onlyBuiltDependencies": [
 			"esbuild"
 		]
+	},
+	"dependencies": {
+		"@supabase/supabase-js": "^2.49.4",
+		"@tailwindcss/vite": "^4.1.5",
+		"highlight.js": "^11.11.1",
+		"marked": "^15.0.11",
+		"tailwindcss": "^4.1.5"
 	}
 }

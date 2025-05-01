@@ -1,0 +1,64 @@
+<script lang="ts">
+  let folders = [
+    { name: "Work chats" },
+    { name: "Life chats" },
+    { name: "Projects chats" },
+    { name: "Clients chats" }
+  ];
+  let chats = [
+    { title: "Plan a 3-day trip", desc: "A 3-day trip to see the northern lights..." },
+    { title: "Ideas for a customer loyalty program", desc: "Here are some ideas..." },
+    { title: "Help me pick", desc: "Here are some gift ideas..." }
+  ];
+</script>
+
+<div class="flex h-screen bg-gradient-to-br from-black to-green-900 text-white">
+  <!-- サイドバー -->
+  <aside class="w-80 bg-gray-900 p-4 flex flex-col">
+    <div class="flex items-center mb-4">
+      <span class="text-xl font-bold">My Chats</span>
+    </div>
+    <input type="text" placeholder="Search" class="mb-4 p-2 rounded bg-gray-800 text-white" />
+    <div>
+      <div class="mb-2 font-semibold text-gray-400">Folders</div>
+      <ul>
+        {#each folders as folder}
+          <li class="mb-1 p-2 rounded hover:bg-gray-800 cursor-pointer">{folder.name}</li>
+        {/each}
+      </ul>
+    </div>
+    <div class="mt-4">
+      <div class="mb-2 font-semibold text-gray-400">Chats</div>
+      <ul>
+        {#each chats as chat}
+          <li class="mb-1 p-2 rounded hover:bg-gray-800 cursor-pointer">
+            <div class="font-bold">{chat.title}</div>
+            <div class="text-xs text-gray-400">{chat.desc}</div>
+          </li>
+        {/each}
+      </ul>
+    </div>
+    <button class="mt-auto bg-green-500 text-black font-bold py-2 rounded hover:bg-green-400">New chat +</button>
+  </aside>
+
+  <!-- メインエリア -->
+  <main class="flex-1 flex items-center justify-center">
+    <div class="bg-gray-900 bg-opacity-80 rounded-xl p-10 w-full max-w-xl shadow-lg flex flex-col items-center">
+      <h1 class="text-3xl font-bold mb-2">How can I help you today?</h1>
+      <p class="mb-6 text-gray-400 text-center">This code will display a prompt asking the user for their name, and then it will display a greeting message...</p>
+      <div class="flex gap-4 mb-6">
+        <button class="bg-gray-800 px-4 py-2 rounded text-sm hover:bg-green-700">Saved Prompt Templates</button>
+        <button class="bg-gray-800 px-4 py-2 rounded text-sm hover:bg-green-700">Media Type Selection</button>
+        <button class="bg-gray-800 px-4 py-2 rounded text-sm hover:bg-green-700">Multilingual Support</button>
+      </div>
+      <div class="w-full flex items-center bg-gray-800 rounded px-2 py-1">
+        <input type="text" placeholder="Type your prompt here..." class="flex-1 bg-transparent outline-none p-2 text-white" />
+        <button class="bg-green-500 hover:bg-green-400 text-black p-2 rounded ml-2">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M5 12h14M12 5l7 7-7 7"></path>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </main>
+</div>
