@@ -1,5 +1,8 @@
 <script lang="ts">
     import { slide, fade } from "svelte/transition";
+    import { onMount } from 'svelte';
+    import { sidebarOpen } from '$lib/components/Header.svelte';
+    
     let { data } = $props();
     let displaySidebar = $state(false);
     let selectId = $state(0);
@@ -8,6 +11,29 @@
     let charMessages = $state([])
     let streamingResponse = $state("");
     let isStreaming = $state(false);
+    // 画面サイズの監視を追加
+    let isMobile = $state(false);
+
+    // 画面幅を監視する関数
+    function checkMobileView() {
+        isMobile = window.innerWidth < 768; // 768px未満をモバイルと定義
+    }
+
+    // マウント時とリサイズ時に画面幅を確認
+    onMount(() => {
+        checkMobileView();
+        window.addEventListener('resize', checkMobileView);
+        
+        // ストアの購読
+        const unsubscribe = sidebarOpen.subscribe(value => {
+            displaySidebar = value;
+        });
+        
+        return () => {
+            window.removeEventListener('resize', checkMobileView);
+            unsubscribe();
+        };
+    });
 
     function adjustTextareaHeight() {
         if (textareaElement) {
@@ -18,11 +44,11 @@
             
             // 丸みを調整（内容が増えたら角丸を減らす）
             if (textareaElement.scrollHeight > 40) {
-            textareaElement.classList.remove('rounded-full');
-            textareaElement.classList.add('rounded-2xl');
+                textareaElement.classList.remove('rounded-full');
+                textareaElement.classList.add('rounded-2xl');
             } else {
-            textareaElement.classList.remove('rounded-2xl');
-            textareaElement.classList.add('rounded-full');
+                textareaElement.classList.remove('rounded-2xl');
+                textareaElement.classList.add('rounded-full');
             }
         }
     }
@@ -91,9 +117,15 @@
         selectId = chatId;
         charMessages = data.chatHistory.find(chat => chat.id === chatId).messages;
         console.log(charMessages);
+        // モバイルの場合、選択後にサイドバーを閉じる
+        if (isMobile) {
+            displaySidebar = false;
+        }
     }
 
     async function sendMessage() {
+        if (!message.trim()) return; // 空メッセージの送信を防止
+        
         isStreaming = true;
         const msg = { role: "user", content: message };
         // まずユーザーメッセージを追加
@@ -101,40 +133,21 @@
         
         // ストリーミングを開始
         await startStreaming();
-
-        // 以下は非ストリーミング
-        // const msg = { role: "user", content: message }
-        // try {
-        //     const response = await fetch('/chat', {
-        //     method: 'POST',
-        //     headers: {
-        //         'Content-Type': 'application/json'
-        //     },
-        //     body: JSON.stringify(msg)
-        // });
-        // const data = await response.json();
-        // charMessages.push(msg);
-        // charMessages.push(data.data);
-        // message = "";
-        // console.log(data);
-        // } catch (error) {
-        //     console.error(error);
-        // }
     }
 
     // Event handler that checks if it's a "real" Enter press
     function handleKeydown(event: KeyboardEvent) {
         // Skip if it's an IME composition event
         if (event.isComposing || event.keyCode === 229) {
-        return;
+            return;
         }
         // ストリーミング中は入力を無視
         if (isStreaming) {
             return;
         }
         
-        // Execute your function only on Enter
-        if (event.key === 'Enter') {
+        // Execute your function only on Enter without Shift
+        if (event.key === 'Enter' && !event.shiftKey) {
             event.preventDefault(); 
             sendMessage();
         }
@@ -142,20 +155,29 @@
 
 </script>
 
-<div class="flex h-full overflow-hidden">
+<svelte:head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+</svelte:head>
+
+<div class="flex h-full overflow-hidden relative">
+    <!-- モバイルでのサイドバーは絶対位置で配置 -->
     {#if displaySidebar}
-    <div id="sidebar" class="text-black w-64 bg-gray-50"
-        transition:slide={{ duration: 300, axis: 'x' }}>
+    <div id="sidebar" 
+         class="text-black bg-gray-50 z-10 {isMobile ? 'fixed inset-0 w-full h-full' : 'w-64'}"
+         transition:slide={{ duration: 300, axis: 'x' }}>
         <div class="m-4">
             <div class="flex justify-between select-none">
                 <p class="p-2 font-bold">Chat History</p>
-                <button onclick={() => displaySidebar = false} class="text-xl cursor-pointer font-bold">×</button>
+                <button onclick={() => { 
+                    displaySidebar = false;
+                    sidebarOpen.set(false);
+                }} class="text-xl cursor-pointer font-bold p-2">×</button>
             </div>
             <ul>
                 {#each data.chatHistory as chat}
                 <li 
                     onclick={() => selectChat(chat.id)}
-                class="group flex justify-between items-center h-10 p-2 rounded hover:bg-gray-200 cursor-pointer overflow-hidden whitespace-nowrap text-ellipsis relative">
+                    class="group flex justify-between items-center h-10 p-2 rounded hover:bg-gray-200 cursor-pointer overflow-hidden whitespace-nowrap text-ellipsis relative">
                     <span>{chat.title}</span>
                     <button class="hidden group-hover:block text-gray-500 hover:text-gray-700 absolute right-2 top-1/2 transform -translate-y-1/2">×</button>
                 </li>
@@ -164,11 +186,14 @@
         </div>
     </div>
     {:else}
-    <div class="w-2 m-4 p-2 cursor-pointer rounded"
+    <div class="w-2 m-4 p-2 cursor-pointer rounded fixed top-16 left-0 z-10 hidden sm:block"
         transition:fade={{ duration: 200 }}>
-        <button onclick={() => displaySidebar = true} aria-label="Open sidebar">
+        <button onclick={() => {
+            displaySidebar = true;
+            sidebarOpen.set(true);
+        }} aria-label="Open sidebar" class="bg-white p-2 rounded-full shadow-md">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M5 12h14M12 5l7 7-7 7"></path>
+                <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"></path>
             </svg>
         </button>
     </div>
@@ -177,14 +202,23 @@
         {#if charMessages.length === 0 && selectId === 0}
         <div class="h-full w-full bg-white flex flex-col justify-center items-center">
             <div class="flex flex-col justify-center items-center">
-                <div class="flex flex-col justify-center items-center p-12 -mt-48">
+                <div class="flex flex-col justify-center items-center p-6 md:p-12 -mt-16 md:-mt-48">
                     <p>Chat Space</p>
                     <p>今日は何をお手伝いしましょうか</p>
                 </div>
-                <div class="flex items-center">
-                    <input type="text" bind:value={message} placeholder="Type your message here..." class="flex-1 w-120 bg-transparent border border-gray-200 outline-none rounded-full py-4 px-8 text-black" onkeydown={handleKeydown} />
+                <div class="flex items-center w-full px-4 md:px-0 max-w-3xl">
+                    <input 
+                        type="text" 
+                        bind:value={message} 
+                        placeholder="Type your message here..." 
+                        class="flex-1 bg-transparent border border-gray-200 outline-none rounded-full py-3 md:py-4 px-4 md:px-8 text-black" 
+                        onkeydown={handleKeydown} />
                     <div class="p-2">
-                        <button aria-label="Send message" onclick={sendMessage} onkeydown={handleKeydown} class="rounded-full bg-green-500 text-white p-4 cursor-pointer hover:bg-green-400">
+                        <button 
+                            aria-label="Send message" 
+                            onclick={sendMessage} 
+                            onkeydown={handleKeydown} 
+                            class="rounded-full bg-green-500 text-white p-3 md:p-4 cursor-pointer hover:bg-green-400">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M5 12h14M12 5l7 7-7 7"></path>
                             </svg>
@@ -195,18 +229,18 @@
         </div>
         {:else}
         <div class="h-full w-full bg-white flex flex-col relative">
-            <div class="pt-12 pb-24 px-60 overflow-y-scroll">
+            <div class="pt-12 pb-24 px-4 sm:px-8 md:px-16 lg:px-32 xl:px-60 overflow-y-scroll">
                 {#each charMessages as charMessage}
                     {#if charMessage.role === "user"}
                         <div class="flex items-center justify-end p-2">
-                            <div class="flex items-center bg-gray-100 rounded-lg p-4">
+                            <div class="flex items-center bg-gray-100 rounded-lg p-3 md:p-4 max-w-[85%] break-words">
                                 <p>{charMessage.content}</p>
                             </div>
                         </div>
                     {/if}
                     {#if charMessage.role === "assistant"}
                         <div class="flex items-center justify-start p-2">
-                            <div class="flex items-center bg-white rounded-lg p-4">
+                            <div class="flex items-center bg-white border border-gray-100 rounded-lg p-3 md:p-4 max-w-[85%] break-words">
                                 <p class="whitespace-pre-wrap">{charMessage.content}</p>
                             </div>
                         </div>
@@ -214,13 +248,15 @@
                 {/each}
             </div>
             <div class="flex flex-col justify-center items-center">
-                <div class="flex items-center absolute bottom-0 pb-10 bg-white w-full">
+                <div class="flex items-center absolute bottom-0 pb-4 md:pb-10 bg-white w-full px-2 md:px-4">
                     <textarea
                         bind:value={message}
-                        rows="1"placeholder="Type your message here..."
-                        class="flex-1 w-120 bg-transparent border border-gray-200 outline-none rounded-full py-4 px-8 text-black resize-none"
+                        rows="1"
+                        placeholder="Type your message here..."
+                        class="flex-1 bg-transparent border border-gray-200 outline-none rounded-full py-3 md:py-4 px-4 md:px-8 text-black resize-none max-h-32"
                         bind:this={textareaElement}
                         oninput={adjustTextareaHeight}
+                        onkeydown={handleKeydown}
                         >
                     </textarea>
                     <div class="p-2">
@@ -228,8 +264,7 @@
                             aria-label="Send message" 
                             onclick={sendMessage} 
                             disabled={isStreaming}
-                            onkeydown={handleKeydown} 
-                            class="rounded-full bg-green-500 text-white p-4 cursor-pointer hover:bg-green-400">
+                            class="rounded-full bg-green-500 text-white p-3 md:p-4 cursor-pointer hover:bg-green-400 disabled:bg-gray-300">
                             {#if isStreaming}
                                 <svg class="w-5 h-5 animate-spin" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"></circle>
