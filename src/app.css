@@ -1,1 +1,13 @@
 @import "tailwindcss";
+
+:root {
+    --font-sans: "Hiragino Kaku Gothic ProN", "Hiragino Kaku Gothic Pro", "游ゴシック", "Yu Gothic", YuGothic, Meiryo, sans-serif;
+  }
+  
+  html {
+    font-family: var(--font-sans);
+  }
+  
+  body {
+    font-family: var(--font-sans);
+  }
