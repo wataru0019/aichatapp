@@ -30,7 +30,6 @@
     // ストリーミングを開始する関数を追加
     async function startStreaming() {
         try {
-            isStreaming = true;
             streamingResponse = ""; // ストリーミングレスポンスをリセット
             
             // 一時的な応答メッセージをチャットに追加
@@ -45,6 +44,9 @@
                 },
                 body: JSON.stringify(message)
             });
+
+            // メッセージをクリア
+            message = "";
             
             if (!response.body) {
                 throw new Error("ReadableStream not supported");
@@ -92,15 +94,13 @@
     }
 
     async function sendMessage() {
+        isStreaming = true;
         const msg = { role: "user", content: message };
         // まずユーザーメッセージを追加
         charMessages.push(msg);
         
         // ストリーミングを開始
         await startStreaming();
-        
-        // メッセージをクリア
-        message = "";
 
         // 以下は非ストリーミング
         // const msg = { role: "user", content: message }
@@ -142,7 +142,7 @@
 
 </script>
 
-<div class="flex h-screen overflow-hidden">
+<div class="flex h-full overflow-hidden">
     {#if displaySidebar}
     <div id="sidebar" class="text-black w-64 bg-gray-50"
         transition:slide={{ duration: 300, axis: 'x' }}>
@@ -175,9 +175,9 @@
     {/if}
     <div id="chatspace" class="flex-1">
         {#if charMessages.length === 0 && selectId === 0}
-        <div class="h-screen w-full bg-white flex flex-col justify-center items-center">
+        <div class="h-full w-full bg-white flex flex-col justify-center items-center">
             <div class="flex flex-col justify-center items-center">
-                <div class="flex flex-col justify-center items-center p-12">
+                <div class="flex flex-col justify-center items-center p-12 -mt-48">
                     <p>Chat Space</p>
                     <p>今日は何をお手伝いしましょうか</p>
                 </div>
@@ -194,7 +194,7 @@
             </div>
         </div>
         {:else}
-        <div class="h-screen w-full bg-white flex flex-col relative">
+        <div class="h-full w-full bg-white flex flex-col relative">
             <div class="pt-12 pb-24 px-60 overflow-y-scroll">
                 {#each charMessages as charMessage}
                     {#if charMessage.role === "user"}
