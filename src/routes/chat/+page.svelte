@@ -38,7 +38,7 @@
             charMessages.push(tempAssistantMsg);
             
             // バックエンドのストリームエンドポイントを呼び出す
-            const response = await fetch('http://localhost:8787/api/stream', {
+            const response = await fetch('https://mybackend.www-shoin.workers.dev/api/stream', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
