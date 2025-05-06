@@ -63,12 +63,16 @@
             charMessages.push(tempAssistantMsg);
             
             // バックエンドのストリームエンドポイントを呼び出す
-            const response = await fetch('https://mybackend.www-shoin.workers.dev/api/stream', {
+            const body = {
+                messages: message,
+                chatId: selectId,
+            }
+            const response = await fetch('https://mybackend.www-shoin.workers.dev/api/agent/memory', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify(message)
+                body: JSON.stringify(body)
             });
 
             // メッセージをクリア
