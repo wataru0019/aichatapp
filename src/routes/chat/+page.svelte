@@ -2,6 +2,8 @@
     import { slide, fade } from "svelte/transition";
     import { onMount } from 'svelte';
     import { sidebarOpen } from '$lib/components/Header.svelte';
+    import { user } from '$lib/stores/authStore';
+    import { supabase } from '$lib/supabaseClient';
     
     let { data } = $props();
     let displaySidebar = $state(false);
@@ -13,14 +15,26 @@
     let isStreaming = $state(false);
     // 画面サイズの監視を追加
     let isMobile = $state(false);
+    let userId = $state()
 
     // 画面幅を監視する関数
     function checkMobileView() {
         isMobile = window.innerWidth < 768; // 768px未満をモバイルと定義
     }
 
+    async function getUserId() {
+        const { data } = await supabase.auth.getSession();
+        if (data.session) {
+            userId = data.session.user.id;
+        } else {
+            userId = null;
+        }
+        return userId;
+    }
+
     // マウント時とリサイズ時に画面幅を確認
     onMount(() => {
+        console.log(user);
         checkMobileView();
         window.addEventListener('resize', checkMobileView);
         
@@ -68,6 +82,7 @@
                 chatId: selectId,
             }
             const response = await fetch('https://mybackend.www-shoin.workers.dev/api/agent/memory', {
+            // const response = await fetch('http://localhost:8787/api/agent/memory', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -117,8 +132,9 @@
         }
     }
 
-    function selectChat(chatId: number) {
+    async function selectChat(chatId: number) {
         selectId = chatId;
+        await getUserId();
         charMessages = data.chatHistory.find(chat => chat.id === chatId).messages;
         console.log(charMessages);
         // モバイルの場合、選択後にサイドバーを閉じる
