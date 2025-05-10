@@ -2,7 +2,6 @@
     import { slide, fade } from "svelte/transition";
     import { onMount } from 'svelte';
     import { sidebarOpen } from '$lib/components/Header.svelte';
-    import { user } from '$lib/stores/authStore';
     import { supabase } from '$lib/supabaseClient';
     
     let { data } = $props();
@@ -34,7 +33,6 @@
 
     // マウント時とリサイズ時に画面幅を確認
     onMount(() => {
-        console.log(user);
         checkMobileView();
         window.addEventListener('resize', checkMobileView);
         
@@ -77,9 +75,11 @@
             charMessages.push(tempAssistantMsg);
             
             // バックエンドのストリームエンドポイントを呼び出す
+            await getUserId();
             const body = {
                 messages: message,
                 chatId: selectId,
+                userId: userId
             }
             const response = await fetch('https://mybackend.www-shoin.workers.dev/api/agent/memory', {
             // const response = await fetch('http://localhost:8787/api/agent/memory', {
@@ -135,6 +135,7 @@
     async function selectChat(chatId: number) {
         selectId = chatId;
         await getUserId();
+        console.log(userId);
         charMessages = data.chatHistory.find(chat => chat.id === chatId).messages;
         console.log(charMessages);
         // モバイルの場合、選択後にサイドバーを閉じる
@@ -150,6 +151,17 @@
         const msg = { role: "user", content: message };
         // まずユーザーメッセージを追加
         charMessages.push(msg);
+
+        // chat_idを取得
+        const response = await fetch('https://mybackend.www-shoin.workers.dev/api/chatid', {
+        // const response = await fetch('http://localhost:8787/api/chatid', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+            });
+        const chat_id = await response.json();
+        selectId = selectId === 0 ? chat_id.chat_id : selectId;
         
         // ストリーミングを開始
         await startStreaming();
@@ -187,7 +199,7 @@
          transition:slide={{ duration: 300, axis: 'x' }}>
         <div class="m-4">
             <div class="flex justify-between select-none">
-                <p class="p-2 font-bold">Chat History</p>
+                <p class="p-2 font-bold">チャット履歴</p>
                 <button onclick={() => { 
                     displaySidebar = false;
                     sidebarOpen.set(false);
